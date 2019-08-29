@@ -5,7 +5,7 @@ substitutions:
   _CLOUDSDK_CONTAINER_CLUSTER: dev-gke
   _HELM_REPO: github_cloudkite-io_infrastructure
   _HELM_CHART_PATH: kubernetes/helm
-  _HELM_CHART_REPO_NAME: cloudbuild-notifier
+  _HELM_CHART_NAME: cloudbuild-notifier
   _REPO_NAME: cloudbuild-notifier
   _K8S_NAMESPACE: cloudbuild-notifier
 
@@ -19,13 +19,13 @@ substitutions:
 # gcloud --project cloudkite-dev kms encrypt --plaintext-file .gcloud-build.key --ciphertext-file gcloud-build.key.enc --location=global --keyring=infrastructure --key=git-crypt
 
 steps:
-- name: 'gcr.io/cloud-builders/docker'  # Build and tag server image
+- name: 'gcr.io/cloud-builders/docker'  # Build and tag image
   args:
   - build
   - -t
   - gcr.io/$PROJECT_ID/${_REPO_NAME}:$COMMIT_SHA
-#  - --cache-from
-#  - gcr.io/$PROJECT_ID/${_SERVER_REPO_NAME}:latest
+  - --cache-from
+  - gcr.io/$PROJECT_ID/${_REPO_NAME}:latest
   - .
 - name: 'gcr.io/cloud-builders/gcloud'  # Clone infrastructure repo
   args:
@@ -69,13 +69,13 @@ steps:
   - --namespace
   - ${_K8S_NAMESPACE}
   - --values
-  - ${_HELM_CHART_PATH}/${_HELM_CHART_REPO_NAME}/values.${_ENVIRONMENT}.yaml
+  - ${_HELM_CHART_PATH}/${_HELM_CHART_NAME}/${_ENVIRONMENT}.values.yaml
   - --values
-  - ${_HELM_CHART_PATH}/${_HELM_CHART_REPO_NAME}/secrets.${_ENVIRONMENT}.yaml
+  - ${_HELM_CHART_PATH}/${_HELM_CHART_NAME}/${_ENVIRONMENT}.secrets.yaml
   - --set
   - env=${_ENVIRONMENT},image.tag=${COMMIT_SHA}
-  - ${_HELM_CHART_REPO_NAME}
-  - ${_HELM_CHART_PATH}/${_HELM_CHART_REPO_NAME}
+  - ${_HELM_CHART_NAME}
+  - ${_HELM_CHART_PATH}/${_HELM_CHART_NAME}
   dir: '/helm'
   env:
   - 'GCLOUD_PROJECT=${_GCLOUD_PROJECT}'
@@ -92,5 +92,5 @@ images:
 timeout: 1200s
 
 tags:
-- ${_HELM_CHART_REPO_NAME}
+- ${_HELM_CHART_NAME}
 - ${_ENVIRONMENT}
