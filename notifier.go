@@ -15,12 +15,15 @@ type CloudbuildResponse struct {
 }
 
 func notify(ctx context.Context, config *Config) {
+	log.Println("Creating pubsub client")
 	client, err := pubsub.NewClient(ctx, config.projectID)
 	if err != nil {
 		log.Println(err)
 	}
 	subscription := client.Subscription(config.subName)
+	log.Println("Getting pubsub subscription")
 	cloudbuildResponse := CloudbuildResponse{}
+	log.Println("Starting to listen to events...")
 	err = subscription.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
 		_ = json.Unmarshal(msg.Data, &cloudbuildResponse)
 		if stringInSlice(cloudbuildResponse.Status, []string{"FAILURE", "INTERNAL_ERROR", "TIMEOUT", "CANCELLED"}) {
