@@ -20,8 +20,10 @@ func notify(ctx context.Context, config *Config) {
 	if err != nil {
 		log.Println(err)
 	}
-	subscription := client.Subscription(config.subName)
-	log.Println("Getting pubsub subscription")
+
+	topic := client.Topic("cloud-builds")
+	err, subscription := getOrCreateSubscription(client, config, ctx, topic)
+
 	cloudbuildResponse := CloudbuildResponse{}
 	log.Println("Starting to listen to events...")
 	err = subscription.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
@@ -34,6 +36,29 @@ func notify(ctx context.Context, config *Config) {
 	if err != nil {
 		log.Println(err)
 	}
+}
+
+func getOrCreateSubscription(client *pubsub.Client, config *Config, ctx context.Context, topic *pubsub.Topic) (error, *pubsub.Subscription) {
+	exists, err := client.Subscription(config.subName).Exists(ctx)
+	var subscription *pubsub.Subscription
+	if !exists {
+		log.Printf("Subscription does not exists. Creating new one with name %s\n", config.subName)
+		subscription, err = client.CreateSubscription(ctx, config.subName, pubsub.SubscriptionConfig{
+			Topic:       topic,
+			AckDeadline: 10 * time.Second,
+		})
+		if err != nil {
+			log.Println(err)
+		}
+		log.Printf("Created subscription %s\n", config.subName)
+	} else {
+		subscription = client.Subscription(config.subName)
+		log.Printf("Subscription exists. Getting %s\n", config.subName)
+	}
+	if err != nil {
+		log.Println(err)
+	}
+	return err, subscription
 }
 
 func stringInSlice(needle string, haystack []string) bool {

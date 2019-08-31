@@ -12,7 +12,7 @@ COPY . .
 # Compile
 RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/app
 
-FROM alpine
+FROM golang:1.12-alpine
 WORKDIR /app
 COPY --from=build /bin/app ./
 CMD ./app
