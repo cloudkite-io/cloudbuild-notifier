@@ -34,6 +34,7 @@ func main() {
 		msg, err := sub.Receive()
 		if err != nil {
 			log.Printf("failed receiving cloudbuild notification")
+			return
 		}
 		notifier.Send(msg)
 	}
