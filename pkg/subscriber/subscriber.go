@@ -45,34 +45,33 @@ func New(config *Config) (notifier.Subscriber, error) {
 }
 
 // Receive listens for cloudbuild notificatios.
-func (s subscriber) Receive() (text string, err error) {
+func (s subscriber) Receive(msg chan<- string) (err error) {
 	ctx := context.Background()
 	subscription, err := s.getOrCreateSubscription(ctx, s.topic)
 	if err != nil {
-		return "", fmt.Errorf("failed getting/creating sub: %s", err)
+		return fmt.Errorf("failed getting/creating sub: %s", err)
 	}
 
 	log.Println("Starting to listen to events...")
-	err = subscription.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
+	err = subscription.Receive(ctx, func(ctx context.Context, pbmsg *pubsub.Message) {
 		var cloudbuildResponse cloudbuildResponse
-		err := json.Unmarshal(msg.Data, &cloudbuildResponse)
+		err := json.Unmarshal(pbmsg.Data, &cloudbuildResponse)
 		if err != nil {
 			err = fmt.Errorf("failed unmarshaling json from cloudbuild response: %s", err)
 			return
 		}
 
 		if stringInSlice(cloudbuildResponse.Status, []string{"FAILURE", "INTERNAL_ERROR", "TIMEOUT", "CANCELLED"}) {
-			text = fmt.Sprintf("Something went wrong in Cloudbuild! \nProject: %s \nStatus: %s \nLog URL: %s",
+			msg <- fmt.Sprintf("Something went wrong in Cloudbuild! \nProject: %s \nStatus: %s \nLog URL: %s",
 				s.config.ProjectID, cloudbuildResponse.Status, cloudbuildResponse.LogURL)
 		}
-		msg.Ack()
+		pbmsg.Ack()
 	})
-
 	if err != nil {
-		return "", err
+		return fmt.Errorf("error while receving pubsub message: %s", err)
 	}
 
-	return text, nil
+	return nil
 }
 
 func (s subscriber) getOrCreateSubscription(ctx context.Context, topic *pubsub.Topic) (*pubsub.Subscription, error) {

@@ -28,13 +28,16 @@ func main() {
 		log.Printf("failed creating cloudbuild subscriber: %s", err)
 	}
 
-	notifier := slack.New(viper.GetString("SLACK_WEBHOOK_URL"))
-
-	for {
-		msg, err := sub.Receive()
+	msg := make(chan string)
+	go func() {
+		err = sub.Receive(msg)
 		if err != nil {
-			log.Printf("failed receiving cloudbuild notification")
+			log.Printf("failed receiving cloudbuild notification: %s", err)
 		}
-		notifier.Send(msg)
+	}()
+
+	notifier := slack.New(viper.GetString("SLACK_WEBHOOK_URL"))
+	for {
+		notifier.Send(<-msg)
 	}
 }
