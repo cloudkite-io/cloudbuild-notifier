@@ -2,13 +2,11 @@ package subscriber
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"time"
 
 	"cloud.google.com/go/pubsub"
-	notifier "github.com/cloudkite-io/cloudbuild-notifier"
 )
 
 // Config is a notifiers configuratios.
@@ -17,35 +15,30 @@ type Config struct {
 	SubName   string
 }
 
-type subscriber struct {
+// Subscriber listens for cloudbuild events.
+type Subscriber struct {
 	config *Config
 	client *pubsub.Client
 	topic  *pubsub.Topic
 }
 
-type cloudbuildResponse struct {
-	Status     string    `json:"status"`
-	CreateTime time.Time `json:"createTime"`
-	LogURL     string    `json:"logUrl"`
-}
-
 // New creates a notifier
-func New(config *Config) (notifier.Subscriber, error) {
+func New(config *Config) (Subscriber, error) {
 	ctx := context.Background()
 	log.Println("Creating pubsub client")
 
 	client, err := pubsub.NewClient(ctx, config.ProjectID)
 	if err != nil {
-		return subscriber{}, fmt.Errorf("failed creating pubsub client: %s", err)
+		return Subscriber{}, fmt.Errorf("failed creating pubsub client: %s", err)
 	}
 
 	topic := client.Topic("cloud-builds")
 
-	return subscriber{config: config, client: client, topic: topic}, nil
+	return Subscriber{config: config, client: client, topic: topic}, nil
 }
 
 // Receive listens for cloudbuild notificatios.
-func (s subscriber) Receive(msg chan<- string) (err error) {
+func (s Subscriber) Receive(msg chan<- *pubsub.Message) (err error) {
 	ctx := context.Background()
 	subscription, err := s.getOrCreateSubscription(ctx, s.topic)
 	if err != nil {
@@ -54,18 +47,7 @@ func (s subscriber) Receive(msg chan<- string) (err error) {
 
 	log.Println("Starting to listen to events...")
 	err = subscription.Receive(ctx, func(ctx context.Context, pbmsg *pubsub.Message) {
-		var cloudbuildResponse cloudbuildResponse
-		err := json.Unmarshal(pbmsg.Data, &cloudbuildResponse)
-		if err != nil {
-			err = fmt.Errorf("failed unmarshaling json from cloudbuild response: %s", err)
-			return
-		}
-
-		if stringInSlice(cloudbuildResponse.Status, []string{"FAILURE", "INTERNAL_ERROR", "TIMEOUT", "CANCELLED"}) {
-			msg <- fmt.Sprintf("Something went wrong in Cloudbuild! \nProject: %s \nStatus: %s \nLog URL: %s",
-				s.config.ProjectID, cloudbuildResponse.Status, cloudbuildResponse.LogURL)
-		}
-		pbmsg.Ack()
+		msg <- pbmsg
 	})
 	if err != nil {
 		return fmt.Errorf("error while receving pubsub message: %s", err)
@@ -74,7 +56,7 @@ func (s subscriber) Receive(msg chan<- string) (err error) {
 	return nil
 }
 
-func (s subscriber) getOrCreateSubscription(ctx context.Context, topic *pubsub.Topic) (*pubsub.Subscription, error) {
+func (s Subscriber) getOrCreateSubscription(ctx context.Context, topic *pubsub.Topic) (*pubsub.Subscription, error) {
 	exists, err := s.client.Subscription(s.config.SubName).Exists(ctx)
 	if err != nil {
 		return &pubsub.Subscription{}, fmt.Errorf("failed checking if subscription %s exists: %s ", s.config.SubName, err)
@@ -94,7 +76,7 @@ func (s subscriber) getOrCreateSubscription(ctx context.Context, topic *pubsub.T
 	return sub, nil
 }
 
-func (s subscriber) createSubscription(ctx context.Context, config pubsub.SubscriptionConfig) (*pubsub.Subscription, error) {
+func (s Subscriber) createSubscription(ctx context.Context, config pubsub.SubscriptionConfig) (*pubsub.Subscription, error) {
 	sub, err := s.client.CreateSubscription(ctx, s.config.SubName, pubsub.SubscriptionConfig{
 		Topic:       s.topic,
 		AckDeadline: 10 * time.Second,
@@ -104,13 +86,4 @@ func (s subscriber) createSubscription(ctx context.Context, config pubsub.Subscr
 	}
 	log.Printf("Created subscription %s\n", s.config.SubName)
 	return sub, nil
-}
-
-func stringInSlice(needle string, haystack []string) bool {
-	for _, b := range haystack {
-		if b == needle {
-			return true
-		}
-	}
-	return false
 }
