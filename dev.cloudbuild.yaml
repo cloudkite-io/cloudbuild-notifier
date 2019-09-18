@@ -27,6 +27,10 @@ steps:
   - --cache-from
   - gcr.io/$PROJECT_ID/${_REPO_NAME}:latest
   - .
+- name: 'gcr.io/cloud-builders/docker'  # Push scraper image to gcr
+  args:
+  - push
+  - gcr.io/$PROJECT_ID/${_REPO_NAME}:$COMMIT_SHA
 - name: 'gcr.io/cloud-builders/gcloud'  # Clone infrastructure repo
   args:
   - source
