@@ -16,4 +16,5 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /app ./cmd
 
 FROM alpine
 COPY --from=build /app /
+RUN apk add ca-certificates
 CMD ./app
