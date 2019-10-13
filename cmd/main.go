@@ -69,10 +69,13 @@ func handleMessage(projectID string, msg *pubsub.Message, notifier cloudbuildnot
 		text = fmt.Sprintf("Build's cancelled! \nProject: %s \nStatus: %s \nLog URL: %s",
 			projectID, resp.Status, resp.LogURL)
 		color = "#C0C0C0"
-	default:
+	case resp.Status == "SUCCESS":
 		text = fmt.Sprintf("Build is successful! \nProject: %s \nStatus: %s \nLog URL: %s",
 			projectID, resp.Status, resp.LogURL)
 		color = "good"
+	default:
+		msg.Ack()
+		return nil
 	}
 
 	err = notifier.Send(text, color)

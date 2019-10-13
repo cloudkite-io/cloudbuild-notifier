@@ -90,8 +90,7 @@ steps:
   - name: 'helm'
     path: '/helm'
 
-images:
-  - 'gcr.io/$PROJECT_ID/${_REPO_NAME}:latest'
+images: ['gcr.io/$PROJECT_ID/${_REPO_NAME}:latest']
 
 timeout: 1200s
 
