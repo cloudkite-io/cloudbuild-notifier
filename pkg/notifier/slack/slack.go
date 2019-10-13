@@ -17,9 +17,9 @@ func New(webhookURL string) cloudbuildnotifier.Notifier {
 	return notifier{webhookURL}
 }
 
-func (n notifier) Send(text string) error {
+func (n notifier) Send(text string, color string) error {
 	attachment := slack.Attachment{
-		Color: "danger",
+		Color: color,
 		Text:  text,
 	}
 

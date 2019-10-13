@@ -58,21 +58,29 @@ func handleMessage(projectID string, msg *pubsub.Message, notifier cloudbuildnot
 		return fmt.Errorf("failed unmarshaling json from cloudbuild response: %s", err)
 	}
 
-	if !stringInSlice(resp.Status, []string{"FAILURE", "INTERNAL_ERROR", "TIMEOUT", "CANCELLED"}) {
-		return nil
+	var text string
+	var color string
+	switch {
+	case stringInSlice(resp.Status, []string{"FAILURE", "INTERNAL_ERROR", "TIMEOUT"}):
+		text = fmt.Sprintf("Build has failed! \nProject: %s \nStatus: %s \nLog URL: %s",
+			projectID, resp.Status, resp.LogURL)
+		color = "danger"
+	case resp.Status == "CANCELLED":
+		text = fmt.Sprintf("Build's cancelled! \nProject: %s \nStatus: %s \nLog URL: %s",
+			projectID, resp.Status, resp.LogURL)
+		color = "#C0C0C0"
+	default:
+		text = fmt.Sprintf("Build is successful! \nProject: %s \nStatus: %s \nLog URL: %s",
+			projectID, resp.Status, resp.LogURL)
+		color = "good"
 	}
 
-	text := fmt.Sprintf("Something went wrong in Cloudbuild! \nProject: %s \nStatus: %s \nLog URL: %s",
-		projectID, resp.Status, resp.LogURL)
-
-	err = notifier.Send(text)
+	err = notifier.Send(text, color)
 	if err != nil {
 		msg.Nack()
 		return fmt.Errorf("failed sending to slack: %s", err)
 	}
-
 	msg.Ack()
-
 	return nil
 }
 
