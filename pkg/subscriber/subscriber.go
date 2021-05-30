@@ -9,7 +9,7 @@ import (
 	"cloud.google.com/go/pubsub"
 )
 
-// Config is a notifiers configuratios.
+// Config is a notifiers configuration.
 type Config struct {
 	ProjectID string
 	SubName   string

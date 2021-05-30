@@ -1,17 +1,15 @@
 package main
 
 import (
+	"cloud.google.com/go/pubsub"
 	"encoding/json"
 	"fmt"
-	"log"
-	"time"
-
 	cloudbuildnotifier "github.com/cloudkite-io/cloudbuild-notifier"
+	"github.com/cloudkite-io/cloudbuild-notifier/pkg/cloudbuild"
 	"github.com/cloudkite-io/cloudbuild-notifier/pkg/notifier/slack"
 	"github.com/cloudkite-io/cloudbuild-notifier/pkg/subscriber"
 	"github.com/spf13/viper"
-
-	"cloud.google.com/go/pubsub"
+	"log"
 )
 
 func init() {
@@ -43,61 +41,33 @@ func main() {
 	}()
 
 	notifier := slack.New(viper.GetString("SLACK_WEBHOOK_URL"))
+	cloudbuildClient, _ := cloudbuild.New(config.ProjectID)
 	for {
-		err = handleMessage(config.ProjectID, <-msg, notifier)
+		err = handleMessage(config.ProjectID, <-msg, notifier, cloudbuildClient)
 		if err != nil {
 			log.Printf("failed handling pubsub message: %s", err)
 		}
 	}
 }
 
-func handleMessage(projectID string, msg *pubsub.Message, notifier cloudbuildnotifier.Notifier) error {
-	var resp cloudbuildResponse
+func handleMessage(projectID string, msg *pubsub.Message, notifier cloudbuildnotifier.Notifier, cloudbuild *cloudbuild.CloudbuildClient) error {
+	var resp cloudbuildnotifier.CloudbuildResponse
 	err := json.Unmarshal(msg.Data, &resp)
 	if err != nil {
 		return fmt.Errorf("failed unmarshaling json from cloudbuild response: %s", err)
 	}
 
-	var text string
-	var color string
-	switch {
-	case stringInSlice(resp.Status, []string{"FAILURE", "INTERNAL_ERROR", "TIMEOUT"}):
-		text = fmt.Sprintf("Build has failed! \nProject: %s \nStatus: %s \nLog URL: %s",
-			projectID, resp.Status, resp.LogURL)
-		color = "danger"
-	case resp.Status == "CANCELLED":
-		text = fmt.Sprintf("Build's cancelled! \nProject: %s \nStatus: %s \nLog URL: %s",
-			projectID, resp.Status, resp.LogURL)
-		color = "#C0C0C0"
-	case resp.Status == "SUCCESS":
-		text = fmt.Sprintf("Build is successful! \nProject: %s \nStatus: %s \nLog URL: %s",
-			projectID, resp.Status, resp.LogURL)
-		color = "good"
-	default:
-		msg.Ack()
-		return nil
+	buildParams, err := cloudbuild.GetBuildParameterss(msg.Attributes["buildId"])
+	if err != nil {
+		return fmt.Errorf("Failed getting build parameters from cloudbuild for build %s: %s",
+			msg.Attributes["buildId"], err)
 	}
 
-	err = notifier.Send(text, color)
+	notifier.Send(resp, buildParams)
 	if err != nil {
 		msg.Nack()
 		return fmt.Errorf("failed sending to slack: %s", err)
 	}
 	msg.Ack()
 	return nil
-}
-
-func stringInSlice(needle string, haystack []string) bool {
-	for _, b := range haystack {
-		if b == needle {
-			return true
-		}
-	}
-	return false
-}
-
-type cloudbuildResponse struct {
-	Status     string    `json:"status"`
-	CreateTime time.Time `json:"createTime"`
-	LogURL     string    `json:"logUrl"`
 }
