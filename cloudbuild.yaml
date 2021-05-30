@@ -1,0 +1,14 @@
+substitutions:
+  _GCLOUD_PROJECT: cloudkite-public
+  _REPO_NAME: cloudbuild-notifier
+
+steps:
+- name: 'gcr.io/kaniko-project/executor:latest'
+  args:
+    - --dockerfile=/workspace/Dockerfile
+    - --context=dir:///workspace
+    - --destination=gcr.io/${_GCLOUD_PROJECT}/${_REPO_NAME}:$COMMIT_SHA
+    - --destination=gcr.io/${_GCLOUD_PROJECT}/${_REPO_NAME}:latest
+    - --cache=true
+
+timeout: 1200s

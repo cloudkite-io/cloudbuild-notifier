@@ -1,5 +1,14 @@
-#### How cloudbuild notifier works
+# cloudbuild-notifer 
 Cloudbuild Notifier is a simple go service that listens to `cloud-build` Google Cloud Pub/Sub topic, which exists by default.
+
+### Docker image
+cloudbuild-notifier is publicly accessible as a Docker image:
+
+```
+gcr.io/cloudkite-public/cloudbuild-notifier:latest
+```
+
+### How cloudbuild-notifier works
 Cloudbuild Notifier filters out messages from Cloud Pub/Sub messages and send notifications to Slack if there failing builds.
 
 A subscription to that topic is created automatically to receive build status messages and if builds have any fails (FAILURE, INTERNAL_ERROR, TIMEOUT, CANCELLED), a notification is sent to Slack and/or Email. 
@@ -8,9 +17,9 @@ A subscription to that topic is created automatically to receive build status me
 
 Follow instructions here https://cloud.google.com/cloud-build/docs/configure-third-party-notifications#slack_notifications
 
-#### Configuration
+### Configuration
 
-##### Environment variables
+#### Environment variables
 
 | NAME                                  | DEFAULT                                | DESCRIPTION                                                                                          |
 | ------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------- |
