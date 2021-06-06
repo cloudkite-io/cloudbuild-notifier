@@ -10,6 +10,7 @@ import (
 	"github.com/cloudkite-io/cloudbuild-notifier/pkg/subscriber"
 	"github.com/spf13/viper"
 	"log"
+	"net/http"
 )
 
 func init() {
@@ -42,15 +43,47 @@ func main() {
 
 	notifier := slack.New(viper.GetString("SLACK_WEBHOOK_URL"))
 	cloudbuildClient, _ := cloudbuild.New(config.ProjectID)
+
+	// HTTP Handler
+	http.HandleFunc("/", httpHandler(notifier, cloudbuildClient))
+	go http.ListenAndServe(":8000", nil)
+
+	// Pubsub handler
 	for {
-		err = handleMessage(config.ProjectID, <-msg, notifier, cloudbuildClient)
+		err = handleMessage(<-msg, notifier, cloudbuildClient)
 		if err != nil {
 			log.Printf("failed handling pubsub message: %s", err)
 		}
 	}
 }
 
-func handleMessage(projectID string, msg *pubsub.Message, notifier cloudbuildnotifier.Notifier, cloudbuild *cloudbuild.CloudbuildClient) error {
+type pubSubHTTPMessage struct {
+	Message struct {
+		Data []byte `json:"data,omitempty"`
+		ID   string `json:"id"`
+	} `json:"message"`
+	Subscription string `json:"subscription"`
+}
+
+func httpHandler(n cloudbuildnotifier.Notifier, c *cloudbuild.CloudbuildClient) http.HandlerFunc {
+	pubsubHttp := &pubSubHTTPMessage{}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := json.NewDecoder(r.Body).Decode(pubsubHttp); err != nil {
+			http.Error(w, fmt.Sprintf("Could not decode request body: %v", err), http.StatusBadRequest)
+			return
+		}
+
+		m := &pubsub.Message{
+			ID:   pubsubHttp.Message.ID,
+			Data: pubsubHttp.Message.Data,
+		}
+
+		handleMessage(m, n, c)
+	}
+}
+
+func handleMessage(msg *pubsub.Message, notifier cloudbuildnotifier.Notifier, cloudbuild *cloudbuild.CloudbuildClient) error {
 	var resp cloudbuildnotifier.CloudbuildResponse
 	err := json.Unmarshal(msg.Data, &resp)
 	if err != nil {

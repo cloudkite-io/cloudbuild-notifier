@@ -37,7 +37,7 @@ func New(config *Config) (Subscriber, error) {
 	return Subscriber{config: config, client: client, topic: topic}, nil
 }
 
-// Receive listens for cloudbuild notificatios.
+// Receive listens for cloudbuild notifications.
 func (s Subscriber) Receive(msg chan<- *pubsub.Message) (err error) {
 	ctx := context.Background()
 	subscription, err := s.getOrCreateSubscription(ctx, s.topic)
