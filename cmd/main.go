@@ -46,6 +46,7 @@ func main() {
 
 	// HTTP Handler
 	http.HandleFunc("/", httpHandler(notifier, cloudbuildClient))
+	http.HandleFunc("/status", statusHandler)
 	go http.ListenAndServe(":8000", nil)
 
 	// Pubsub handler
@@ -63,6 +64,10 @@ type pubSubHTTPMessage struct {
 		ID   string `json:"id"`
 	} `json:"message"`
 	Subscription string `json:"subscription"`
+}
+
+func statusHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Online")
 }
 
 func httpHandler(n cloudbuildnotifier.Notifier, c *cloudbuild.CloudbuildClient) http.HandlerFunc {
