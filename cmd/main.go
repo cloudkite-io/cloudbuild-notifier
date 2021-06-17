@@ -89,6 +89,7 @@ func httpHandler(n cloudbuildnotifier.Notifier, c *cloudbuild.CloudbuildClient) 
 }
 
 func handleMessage(msg *pubsub.Message, notifier cloudbuildnotifier.Notifier, cloudbuild *cloudbuild.CloudbuildClient) error {
+	fmt.Printf("Handling msg: %v", msg.Data)
 	var resp cloudbuildnotifier.CloudbuildResponse
 	err := json.Unmarshal(msg.Data, &resp)
 	if err != nil {
