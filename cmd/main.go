@@ -61,7 +61,7 @@ func main() {
 type pubSubHTTPMessage struct {
 	Message struct {
 		Data []byte `json:"data,omitempty"`
-		ID   string `json:"id"`
+		Attributes  map[string]string `json:"attributes,omitempty"`
 	} `json:"message"`
 	Subscription string `json:"subscription"`
 }
@@ -80,16 +80,28 @@ func httpHandler(n cloudbuildnotifier.Notifier, c *cloudbuild.CloudbuildClient) 
 		}
 
 		m := &pubsub.Message{
-			ID:   pubsubHttp.Message.ID,
+			ID:   pubsubHttp.Message.Attributes["buildId"],
+			Attributes: pubsubHttp.Message.Attributes,
 			Data: pubsubHttp.Message.Data,
 		}
 
-		handleMessage(m, n, c)
+		if err := handleMessage(m, n, c); err != nil {
+			errorMessage := fmt.Sprintf("Error handling http message: %s", err)
+			fmt.Printf(errorMessage)
+			http.Error(w, errorMessage, http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
 func handleMessage(msg *pubsub.Message, notifier cloudbuildnotifier.Notifier, cloudbuild *cloudbuild.CloudbuildClient) error {
-	fmt.Printf("Handling msg: %v", msg.Data)
+	defer func() {
+		// Recover from a http message that can't be Acked
+		if err := recover(); err != nil {
+			fmt.Printf("PubSub HTTP Done.")
+		}
+	}()
+
 	var resp cloudbuildnotifier.CloudbuildResponse
 	err := json.Unmarshal(msg.Data, &resp)
 	if err != nil {
@@ -102,11 +114,12 @@ func handleMessage(msg *pubsub.Message, notifier cloudbuildnotifier.Notifier, cl
 			msg.Attributes["buildId"], err)
 	}
 
-	notifier.Send(resp, buildParams)
+	err = notifier.Send(resp, buildParams)
 	if err != nil {
 		msg.Nack()
 		return fmt.Errorf("failed sending to slack: %s", err)
 	}
+	// This will panic if from an HTTP message since they can't be acked.
 	msg.Ack()
 	return nil
 }
