@@ -19,6 +19,7 @@ func New(webhookURL string) cloudbuildnotifier.Notifier {
 }
 
 func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse, buildParams cloudbuild.BuildParameters) error {
+
 	var color string
 	switch {
 	case stringInSlice(cloudbuildResponse.Status, []string{"FAILURE", "INTERNAL_ERROR", "TIMEOUT"}):
@@ -27,6 +28,10 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 		color = "#C0C0C0"
 	case cloudbuildResponse.Status == "SUCCESS":
 		color = "good"
+	}
+
+	if cloudbuildResponse.Status == "QUEUED" || cloudbuildResponse.Status == "WORKING" {
+		return nil
 	}
 
 	attachment := slack.Attachment{
@@ -53,6 +58,7 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 	}
 
 	log.Printf("Sent %s Slack message for build %s\n", n.webhookURL, buildParams.Id)
+
 	return nil
 }
 
