@@ -24,8 +24,8 @@ func main() {
 	}
 
 	config := &subscriber.Config{
-		ProjectID: viper.GetString("GCLOUD_PROJECT_ID"),
-		SubName:   subName,
+		ProjectID:  viper.GetString("GCLOUD_PROJECT_ID"),
+		SubName:    subName,
 	}
 
 	sub, err := subscriber.New(config)
@@ -41,7 +41,7 @@ func main() {
 		}
 	}()
 
-	notifier := slack.New(viper.GetString("SLACK_WEBHOOK_URL"))
+	notifier := slack.New(viper.GetString("SLACK_WEBHOOK_URL"), viper.GetString("GIT_USER_URL"))
 	cloudbuildClient, _ := cloudbuild.New(config.ProjectID)
 
 	// HTTP Handler
@@ -60,8 +60,8 @@ func main() {
 
 type pubSubHTTPMessage struct {
 	Message struct {
-		Data []byte `json:"data,omitempty"`
-		Attributes  map[string]string `json:"attributes,omitempty"`
+		Data       []byte            `json:"data,omitempty"`
+		Attributes map[string]string `json:"attributes,omitempty"`
 	} `json:"message"`
 	Subscription string `json:"subscription"`
 }
@@ -80,9 +80,9 @@ func httpHandler(n cloudbuildnotifier.Notifier, c *cloudbuild.CloudbuildClient) 
 		}
 
 		m := &pubsub.Message{
-			ID:   pubsubHttp.Message.Attributes["buildId"],
+			ID:         pubsubHttp.Message.Attributes["buildId"],
 			Attributes: pubsubHttp.Message.Attributes,
-			Data: pubsubHttp.Message.Data,
+			Data:       pubsubHttp.Message.Data,
 		}
 
 		if err := handleMessage(m, n, c); err != nil {

@@ -3,6 +3,8 @@ package slack
 import (
 	"fmt"
 	"log"
+	"net/url"
+	"path"
 
 	cloudbuildnotifier "github.com/cloudkite-io/cloudbuild-notifier"
 	"github.com/cloudkite-io/cloudbuild-notifier/pkg/cloudbuild"
@@ -10,12 +12,16 @@ import (
 )
 
 type notifier struct {
-	webhookURL string
+	webhookURL    string
+	githubUserURL string
 }
 
 // New creates a slack notifier.
-func New(webhookURL string) cloudbuildnotifier.Notifier {
-	return notifier{webhookURL}
+func New(webhookURL, githubUserURL string) cloudbuildnotifier.Notifier {
+	return notifier{
+		webhookURL,
+		githubUserURL,
+	}
 }
 
 func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse, buildParams cloudbuild.BuildParameters) error {
@@ -34,11 +40,16 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 		return nil
 	}
 
+	commitShaURL, err := buildURL(buildParams, n.githubUserURL)
+	if err != nil {
+		return fmt.Errorf("failed posting to webhook %s: %s", n.webhookURL, err)
+	}
+
 	attachment := slack.Attachment{
 		Title: fmt.Sprintf("Cloudbuild: %s", cloudbuildResponse.Status),
 		Color: color,
 		Text: fmt.Sprintf("Repo: %s\nBranch: %s\nCommit SHA: %s\nTrigger: %s\n",
-			buildParams.REPO_NAME, buildParams.BRANCH_NAME, buildParams.COMMIT_SHA, buildParams.TRIGGER_NAME),
+			buildParams.REPO_NAME, buildParams.BRANCH_NAME, commitShaURL, buildParams.TRIGGER_NAME),
 		Actions: []slack.AttachmentAction{
 			{
 				Text: "View Logs",
@@ -52,7 +63,7 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 		Attachments: []slack.Attachment{attachment},
 	}
 
-	err := slack.PostWebhook(n.webhookURL, &msg)
+	err = slack.PostWebhook(n.webhookURL, &msg)
 	if err != nil {
 		return fmt.Errorf("failed posting to webhook %s: %s", n.webhookURL, err)
 	}
@@ -60,6 +71,15 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 	log.Printf("Sent %s Slack message for build %s\n", n.webhookURL, buildParams.Id)
 
 	return nil
+}
+
+func buildURL(buildParams cloudbuild.BuildParameters, gitUserURL string) (string, error) {
+	u, err := url.Parse(gitUserURL)
+	if err != nil {
+		return "", err
+	}
+	u.Path = path.Join(u.Path, buildParams.REPO_NAME, "commit", buildParams.COMMIT_SHA)
+	return u.String(), nil
 }
 
 func stringInSlice(needle string, haystack []string) bool {
