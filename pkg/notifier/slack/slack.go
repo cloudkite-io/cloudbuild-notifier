@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/url"
 	"path"
+	"strings"
 
 	cloudbuildnotifier "github.com/cloudkite-io/cloudbuild-notifier"
 	"github.com/cloudkite-io/cloudbuild-notifier/pkg/cloudbuild"
@@ -40,7 +41,7 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 		return nil
 	}
 
-	commitShaURL, err := buildURL(buildParams, n.githubUserURL)
+	commitShaURL, err := buildGitSourceURL(buildParams)
 	if err != nil {
 		return fmt.Errorf("failed posting to webhook %s: %s", n.webhookURL, err)
 	}
@@ -73,12 +74,13 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 	return nil
 }
 
-func buildURL(buildParams cloudbuild.BuildParameters, gitUserURL string) (string, error) {
-	u, err := url.Parse(gitUserURL)
+func buildGitSourceURL(buildParams cloudbuild.BuildParameters) (string, error) {
+	u, err := url.Parse(buildParams.URL)
 	if err != nil {
 		return "", err
 	}
-	u.Path = path.Join(u.Path, buildParams.REPO_NAME, "commit", buildParams.COMMIT_SHA)
+	u.Path = strings.Trim(u.Path, ".git")
+	u.Path = path.Join(u.Path, "commit", buildParams.COMMIT_SHA)
 	return u.String(), nil
 }
 

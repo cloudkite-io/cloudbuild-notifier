@@ -32,9 +32,10 @@ type BuildParameters struct {
 	COMMIT_SHA   string
 	REVISION_ID  string
 	TRIGGER_NAME string
+	URL          string
 }
 
-func (c *CloudbuildClient) GetBuildParameterss(buildId string) (BuildParameters, error) {
+func (c *CloudbuildClient) GetBuildParameters(buildId string) (BuildParameters, error) {
 	buildParams := &BuildParameters{
 		Id: buildId,
 	}

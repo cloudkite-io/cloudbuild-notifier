@@ -11,8 +11,8 @@ import (
 
 // Config is a notifiers configuration.
 type Config struct {
-	ProjectID  string
-	SubName    string
+	ProjectID string
+	SubName   string
 }
 
 // Subscriber listens for cloudbuild events.

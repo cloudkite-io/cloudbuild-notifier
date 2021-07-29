@@ -24,8 +24,8 @@ func main() {
 	}
 
 	config := &subscriber.Config{
-		ProjectID:  viper.GetString("GCLOUD_PROJECT_ID"),
-		SubName:    subName,
+		ProjectID: viper.GetString("GCLOUD_PROJECT_ID"),
+		SubName:   subName,
 	}
 
 	sub, err := subscriber.New(config)
