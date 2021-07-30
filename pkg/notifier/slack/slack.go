@@ -14,15 +14,11 @@ import (
 
 type notifier struct {
 	webhookURL    string
-	githubUserURL string
 }
 
 // New creates a slack notifier.
-func New(webhookURL, githubUserURL string) cloudbuildnotifier.Notifier {
-	return notifier{
-		webhookURL,
-		githubUserURL,
-	}
+func New(webhookURL string) cloudbuildnotifier.Notifier {
+	return notifier{webhookURL}
 }
 
 func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse, buildParams cloudbuild.BuildParameters) error {
