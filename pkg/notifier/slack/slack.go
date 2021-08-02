@@ -71,7 +71,7 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 }
 
 func buildGitSourceURL(buildParams cloudbuild.BuildParameters) (string, error) {
-	u, err := url.Parse(buildParams._)
+	u, err := url.Parse(buildParams.HEAD_REPO_URL)
 	if err != nil {
 		return "", err
 	}
