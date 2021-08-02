@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/fatih/structs"
-	cloudbuild "google.golang.org/api/cloudbuild/v1"
+	"google.golang.org/api/cloudbuild/v1"
 	"log"
 )
 
@@ -37,12 +37,14 @@ type BuildParameters struct {
 }
 
 func (c *CloudbuildClient) GetBuildParameters(buildId string) (BuildParameters, error) {
+	log.Println("Getting build parameters...")
 	buildParams := &BuildParameters{
 		Id: buildId,
 	}
 	b := structs.New(buildParams)
 	result, err := c.client.Get(c.ProjectID, buildId).Do()
 	if err != nil {
+		log.Printf("error getting build parameters: %s\n", err)
 		return *buildParams, err
 	}
 	log.Println("Substitutions available:", result.Substitutions)
