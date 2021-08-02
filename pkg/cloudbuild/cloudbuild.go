@@ -27,13 +27,13 @@ func New(projectId string) (*CloudbuildClient, error) {
 }
 
 type BuildParameters struct {
-	Id           string
-	REPO_NAME    string
-	BRANCH_NAME  string
-	COMMIT_SHA   string
-	REVISION_ID  string
-	TRIGGER_NAME string
-	URL          string
+	Id             string
+	REPO_NAME      string
+	BRANCH_NAME    string
+	COMMIT_SHA     string
+	REVISION_ID    string
+	TRIGGER_NAME   string
+	_HEAD_REPO_URL string
 }
 
 func (c *CloudbuildClient) GetBuildParameters(buildId string) (BuildParameters, error) {

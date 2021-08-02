@@ -13,7 +13,7 @@ import (
 )
 
 type notifier struct {
-	webhookURL    string
+	webhookURL string
 }
 
 // New creates a slack notifier.
@@ -71,7 +71,7 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 }
 
 func buildGitSourceURL(buildParams cloudbuild.BuildParameters) (string, error) {
-	u, err := url.Parse(buildParams.URL)
+	u, err := url.Parse(buildParams._)
 	if err != nil {
 		return "", err
 	}
