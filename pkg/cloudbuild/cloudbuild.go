@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/fatih/structs"
 	cloudbuild "google.golang.org/api/cloudbuild/v1"
+	"log"
 )
 
 type CloudbuildClient struct {
@@ -44,6 +45,7 @@ func (c *CloudbuildClient) GetBuildParameters(buildId string) (BuildParameters, 
 	if err != nil {
 		return *buildParams, err
 	}
+	log.Println("Substitutions available:", result.Substitutions)
 	for k, v := range result.Substitutions {
 		if f, ok := b.FieldOk(k); ok {
 			f.Set(v)
