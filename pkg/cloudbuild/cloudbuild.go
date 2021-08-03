@@ -42,6 +42,7 @@ func (c *CloudbuildClient) GetBuildParameters(buildId string) (BuildParameters, 
 	}
 	b := structs.New(buildParams)
 	result, err := c.client.Get(c.ProjectID, buildId).Do()
+	log.Println("source:", result.Source)
 	if err != nil {
 		log.Printf("error getting build parameters: %s\n", err)
 		return *buildParams, err

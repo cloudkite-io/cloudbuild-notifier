@@ -108,8 +108,6 @@ func handleMessage(msg *pubsub.Message, notifier cloudbuildnotifier.Notifier, cl
 		return fmt.Errorf("failed unmarshaling json from cloudbuild response: %s", err)
 	}
 
-	log.Println("messages attr:", msg.Attributes )
-
 	buildParams, err := cloudbuild.GetBuildParameters(msg.Attributes["buildId"])
 	if err != nil {
 		return fmt.Errorf("Failed getting build parameters from cloudbuild for build %s: %s",
