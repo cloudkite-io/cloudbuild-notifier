@@ -37,7 +37,6 @@ type BuildParameters struct {
 }
 
 func (c *CloudbuildClient) GetBuildParameters(buildId string) (BuildParameters, error) {
-	log.Printf("Getting build parameters...\n")
 	buildParams := &BuildParameters{
 		Id: buildId,
 	}
@@ -47,7 +46,7 @@ func (c *CloudbuildClient) GetBuildParameters(buildId string) (BuildParameters, 
 		log.Printf("error getting build parameters: %s\n", err)
 		return *buildParams, err
 	}
-	log.Printf("Substitutions available: %v\n", result.Substitutions)
+
 	for k, v := range result.Substitutions {
 		if f, ok := b.FieldOk(k); ok {
 			f.Set(v)
