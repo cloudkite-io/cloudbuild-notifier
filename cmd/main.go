@@ -60,8 +60,8 @@ func main() {
 
 type pubSubHTTPMessage struct {
 	Message struct {
-		Data []byte `json:"data,omitempty"`
-		Attributes  map[string]string `json:"attributes,omitempty"`
+		Data       []byte            `json:"data,omitempty"`
+		Attributes map[string]string `json:"attributes,omitempty"`
 	} `json:"message"`
 	Subscription string `json:"subscription"`
 }
@@ -80,9 +80,9 @@ func httpHandler(n cloudbuildnotifier.Notifier, c *cloudbuild.CloudbuildClient) 
 		}
 
 		m := &pubsub.Message{
-			ID:   pubsubHttp.Message.Attributes["buildId"],
+			ID:         pubsubHttp.Message.Attributes["buildId"],
 			Attributes: pubsubHttp.Message.Attributes,
-			Data: pubsubHttp.Message.Data,
+			Data:       pubsubHttp.Message.Data,
 		}
 
 		if err := handleMessage(m, n, c); err != nil {
@@ -108,7 +108,7 @@ func handleMessage(msg *pubsub.Message, notifier cloudbuildnotifier.Notifier, cl
 		return fmt.Errorf("failed unmarshaling json from cloudbuild response: %s", err)
 	}
 
-	buildParams, err := cloudbuild.GetBuildParameterss(msg.Attributes["buildId"])
+	buildParams, err := cloudbuild.GetBuildParameters(msg.Attributes["buildId"])
 	if err != nil {
 		return fmt.Errorf("Failed getting build parameters from cloudbuild for build %s: %s",
 			msg.Attributes["buildId"], err)

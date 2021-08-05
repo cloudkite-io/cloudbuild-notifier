@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/fatih/structs"
-	cloudbuild "google.golang.org/api/cloudbuild/v1"
+	"google.golang.org/api/cloudbuild/v1"
+	"log"
 )
 
 type CloudbuildClient struct {
@@ -26,23 +27,27 @@ func New(projectId string) (*CloudbuildClient, error) {
 }
 
 type BuildParameters struct {
-	Id           string
-	REPO_NAME    string
-	BRANCH_NAME  string
-	COMMIT_SHA   string
-	REVISION_ID  string
-	TRIGGER_NAME string
+	Id            string
+	REPO_NAME     string
+	BRANCH_NAME   string
+	COMMIT_SHA    string
+	REVISION_ID   string
+	TRIGGER_NAME  string
+	HEAD_REPO_URL string
 }
 
-func (c *CloudbuildClient) GetBuildParameterss(buildId string) (BuildParameters, error) {
+func (c *CloudbuildClient) GetBuildParameters(buildId string) (BuildParameters, error) {
 	buildParams := &BuildParameters{
 		Id: buildId,
 	}
 	b := structs.New(buildParams)
 	result, err := c.client.Get(c.ProjectID, buildId).Do()
+	log.Println("source:", result.Source)
 	if err != nil {
+		log.Printf("error getting build parameters: %s\n", err)
 		return *buildParams, err
 	}
+
 	for k, v := range result.Substitutions {
 		if f, ok := b.FieldOk(k); ok {
 			f.Set(v)
