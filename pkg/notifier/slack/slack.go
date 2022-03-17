@@ -3,6 +3,7 @@ package slack
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	cloudbuildnotifier "github.com/cloudkite-io/cloudbuild-notifier"
 	"github.com/cloudkite-io/cloudbuild-notifier/pkg/cloudbuild"
@@ -10,12 +11,15 @@ import (
 )
 
 type notifier struct {
-	webhookURL string
+	webhookURL     string
+	filteredStatus []string
+	filteredBranch []string
+	filteredSource string
 }
 
 // New creates a slack notifier.
-func New(webhookURL string) cloudbuildnotifier.Notifier {
-	return notifier{webhookURL}
+func New(webhookURL string, filteredStatus []string, filteredBranch []string, filteredSource string) cloudbuildnotifier.Notifier {
+	return notifier{webhookURL, filteredStatus, filteredBranch, filteredSource}
 }
 
 func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse, buildParams cloudbuild.BuildParameters) error {
@@ -28,6 +32,24 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 		color = "#C0C0C0"
 	case cloudbuildResponse.Status == "SUCCESS":
 		color = "good"
+	}
+
+	if len(n.filteredStatus) > 0 {
+		if !stringInSlice(cloudbuildResponse.Status, n.filteredStatus) {
+			return nil
+		}
+	}
+
+	if len(n.filteredBranch) > 0 {
+		if !stringInSlice(buildParams.BRANCH_NAME, n.filteredBranch) {
+			return nil
+		}
+	}
+
+	if n.filteredSource != "" {
+		if !strings.Contains(buildParams.REPO_NAME, n.filteredSource) {
+			return nil
+		}
 	}
 
 	if cloudbuildResponse.Status == "QUEUED" || cloudbuildResponse.Status == "WORKING" {
