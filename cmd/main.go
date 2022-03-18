@@ -42,25 +42,14 @@ func main() {
 		}
 	}()
 
-	// Get STATUS_TO_FILTER environment variable and convert it to an Array
-	filteredStatus := viper.GetString("STATUS_TO_FILTER")
-	var filteredStatusArr []string
-	filteredStatusErr := json.Unmarshal([]byte(filteredStatus), &filteredStatusArr)
-	if filteredStatusErr != nil {
-		log.Printf("No status to filter found")
+	// Get NOTIFICATION_FILTERS environment variable and convert it to an Array
+	notificationFilters := viper.GetString("NOTIFICATION_FILTERS")
+	var notificationFiltersArr slack.FiltersType
+	notificationFiltersErr := json.Unmarshal([]byte(notificationFilters), &notificationFiltersArr)
+	if notificationFiltersErr != nil {
+		log.Printf("No notification filters found")
 	}
-
-	// Get BRANCH_TO_FILTER environment variable and convert it to an Array
-	filteredBranch := viper.GetString("BRANCH_TO_FILTER")
-	var filteredBranchArr []string
-	filteredBranchErr := json.Unmarshal([]byte(filteredBranch), &filteredBranchArr)
-	if filteredBranchErr != nil {
-		log.Printf("No Branch to filter found")
-	}
-
-	filteredSource := viper.GetString("SOURCE_TO_FILTER")
-
-	notifier := slack.New(viper.GetString("SLACK_WEBHOOK_URL"), filteredStatusArr, filteredBranchArr, filteredSource)
+	notifier := slack.New(viper.GetString("SLACK_WEBHOOK_URL"), notificationFiltersArr)
 	cloudbuildClient, _ := cloudbuild.New(config.ProjectID)
 
 	// HTTP Handler
