@@ -34,40 +34,40 @@ The NOTIFICATION_FILTERS environment variable should be passed as a JSON string 
 ```javascript
 [
     {
-        "status": [
+        "Status": [
             "SUCCESS",
             "WORKING"
         ],
-        "sources": [
+        "Sources": [
             "org-name/repo-name1",
             "org-name/repo-name2"
         ],
-        "branches": [
+        "Branches": [
             "main",
             "production"
         ],
-        "operator": "or"
+        "Operator": "or"
     },
     {
-        "status": [
+        "Status": [
             "FAILURE",
             "QUEUED"
         ],
-        "sources": [
+        "Sources": [
             "org-name/repo-name3",
             "org-name/repo-name4"
         ],
-        "branches": [
+        "Branches": [
             "dev"
         ],
-        "operator": "and"
+        "Operator": "and"
     }
 ]
 ```
 Below is a description of the four(optional) parameters that it takes
 | NAME                                  | DEFAULT                                | DESCRIPTION                                                                                          |
 | ------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| status                     | All statuses                             | A list of build status that should trigger notifications to be sent to Slack e.g. ["FAILURE", "INTERNAL_ERROR"]. By default, notifications will be sent for all statuses |
-| sources                     | Any source                             | A list of substrings that will be used to match which source Repos should trigger notifications to be sent to Slack e.g. ["org-name/repo-name"] |
-| branches                     | All branches                             | A list of branches whose builds should trigger notifications to be sent to Slack e.g. ["main", "production"]. By default, notifications will be sent for all branches |
-| operator                     | "or"                             | The logical operation that should be used to trigger notifications. Options are: "and" or "or". When "and" is used, notifications will only be sent when the build matches all the other NOTIFICATION_FILTERS that have been provided. When "or" is used, notifications are triggered when the build matches any of the NOTIFICATION_FILTERS that have been provided.  |
+| Status                     | All statuses                             | A list of build status that should trigger notifications to be sent to Slack e.g. ["FAILURE", "INTERNAL_ERROR"]. By default, notifications will be sent for all statuses |
+| Sources                     | Any source                             | A list of substrings that will be used to match which source Repos should trigger notifications to be sent to Slack e.g. ["org-name/repo-name"] |
+| Branches                     | All branches                             | A list of branches whose builds should trigger notifications to be sent to Slack e.g. ["main", "production"]. By default, notifications will be sent for all branches |
+| Operator                     | "or"                             | The logical operation that should be used to trigger notifications. Options are: "and" or "or". When "and" is used, notifications will only be sent when the build matches all the other NOTIFICATION_FILTERS that have been provided. When "or" is used, notifications are triggered when the build matches any of the NOTIFICATION_FILTERS that have been provided.  |
