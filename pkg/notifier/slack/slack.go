@@ -48,10 +48,8 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 					}
 				}
 				if len(n.notificationFiltersArr[i].Sources) > 0 {
-					for sc := 0; sc < len(n.notificationFiltersArr[i].Sources); sc++ {
-						if !strings.Contains(buildParams.REPO_NAME, n.notificationFiltersArr[i].Sources[sc]) {
-							notify = false
-						}
+					if !stringContainsSubstrSlice(buildParams.REPO_NAME, n.notificationFiltersArr[i].Sources) {
+						notify = false
 					}
 				}
 			} else {
@@ -68,10 +66,8 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 					}
 				}
 				if len(n.notificationFiltersArr[i].Sources) > 0 {
-					for sc := 0; sc < len(n.notificationFiltersArr[i].Sources); sc++ {
-						if strings.Contains(buildParams.REPO_NAME, n.notificationFiltersArr[i].Sources[sc]) {
-							notify = true
-						}
+					if stringContainsSubstrSlice(buildParams.REPO_NAME, n.notificationFiltersArr[i].Sources) {
+						notify = true
 					}
 				}
 			}
@@ -130,6 +126,15 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 func stringInSlice(needle string, haystack []string) bool {
 	for _, b := range haystack {
 		if b == needle {
+			return true
+		}
+	}
+	return false
+}
+
+func stringContainsSubstrSlice(needle string, haystack []string) bool {
+	for _, b := range haystack {
+		if strings.Contains(needle, b) {
 			return true
 		}
 	}
