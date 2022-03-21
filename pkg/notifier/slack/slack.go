@@ -32,29 +32,31 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 	// Check if there are any notification filters that have been passed
 	// Notification filters are used to determine whether the build status should be sent to Slack channel
 	if len(n.notificationFiltersArr) > 0 {
+		var notify bool
 		for i := 0; i < len(n.notificationFiltersArr); i++ {
 			if n.notificationFiltersArr[i].Operator == "and" {
+				notify = true
 				// "and" case where all conditions passed must be fulfilled for messages to be sent to Slack
 				if len(n.notificationFiltersArr[i].Status) > 0 {
 					if !stringInSlice(cloudbuildResponse.Status, n.notificationFiltersArr[i].Status) {
-						return nil
+						notify = false
 					}
 				}
 				if len(n.notificationFiltersArr[i].Branches) > 0 {
 					if !stringInSlice(buildParams.BRANCH_NAME, n.notificationFiltersArr[i].Branches) {
-						return nil
+						notify = false
 					}
 				}
 				if len(n.notificationFiltersArr[i].Sources) > 0 {
 					for sc := 0; sc < len(n.notificationFiltersArr[i].Sources); sc++ {
 						if !strings.Contains(buildParams.REPO_NAME, n.notificationFiltersArr[i].Sources[sc]) {
-							return nil
+							notify = false
 						}
 					}
 				}
 			} else {
+				notify = false
 				// Default "or" operator case where if any condition is passed, notifications will be sent to Slack
-				notify := false
 				if len(n.notificationFiltersArr[i].Status) > 0 {
 					if stringInSlice(cloudbuildResponse.Status, n.notificationFiltersArr[i].Status) {
 						notify = true
@@ -72,11 +74,15 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 						}
 					}
 				}
-				if !notify {
-					return nil
-				}
+			}
+			if notify {
+				break
 			}
 		}
+		if !notify {
+			return nil
+		}
+
 	}
 
 	var color string
