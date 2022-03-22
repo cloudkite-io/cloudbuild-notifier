@@ -3,6 +3,7 @@ package slack
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	cloudbuildnotifier "github.com/cloudkite-io/cloudbuild-notifier"
@@ -10,68 +11,32 @@ import (
 	"github.com/slack-go/slack"
 )
 
-type FiltersType []struct {
-	Status   []string
-	Sources  []string
-	Branches []string
-	Operator string
-}
-
 type notifier struct {
-	webhookURL             string
-	notificationFiltersArr FiltersType
+	webhookURL          string
+	notificationFilters string
 }
 
 // New creates a slack notifier.
-func New(webhookURL string, notificationFiltersArr FiltersType) cloudbuildnotifier.Notifier {
-	return notifier{webhookURL, notificationFiltersArr}
+func New(webhookURL string, notificationFilters string) cloudbuildnotifier.Notifier {
+	return notifier{webhookURL, notificationFilters}
 }
 
 func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse, buildParams cloudbuild.BuildParameters) error {
 
 	// Check if there are any notification filters that have been passed
 	// Notification filters are used to determine whether the build status should be sent to Slack channel
-	if len(n.notificationFiltersArr) > 0 {
-		var notify bool
-		for i := 0; i < len(n.notificationFiltersArr); i++ {
-			if n.notificationFiltersArr[i].Operator == "and" {
+	// <source regex>:<branch regex>:<status regex>,<source regex>:<branch regex>:<status regex>
+	if n.notificationFilters != "" {
+		notify := false
+		notificationFiltersArray := strings.Split(n.notificationFilters, ",")
+		for i := 0; i < len(notificationFiltersArray); i++ {
+			splitNotificationFilters := strings.Split(notificationFiltersArray[i], ":")
+			sourceRegex, _ := regexp.Compile(splitNotificationFilters[0])
+			branchRegex, _ := regexp.Compile(splitNotificationFilters[1])
+			statusRegex, _ := regexp.Compile(splitNotificationFilters[2])
+			// check if all filters have been met
+			if sourceRegex.MatchString(buildParams.REPO_NAME) && branchRegex.MatchString(buildParams.BRANCH_NAME) && statusRegex.MatchString(cloudbuildResponse.Status) {
 				notify = true
-				// "and" case where all conditions passed must be fulfilled for messages to be sent to Slack
-				if len(n.notificationFiltersArr[i].Status) > 0 {
-					if !stringInSlice(cloudbuildResponse.Status, n.notificationFiltersArr[i].Status) {
-						notify = false
-					}
-				}
-				if len(n.notificationFiltersArr[i].Branches) > 0 {
-					if !stringInSlice(buildParams.BRANCH_NAME, n.notificationFiltersArr[i].Branches) {
-						notify = false
-					}
-				}
-				if len(n.notificationFiltersArr[i].Sources) > 0 {
-					if !stringContainsSubstrSlice(buildParams.REPO_NAME, n.notificationFiltersArr[i].Sources) {
-						notify = false
-					}
-				}
-			} else {
-				notify = false
-				// Default "or" operator case where if any condition is passed, notifications will be sent to Slack
-				if len(n.notificationFiltersArr[i].Status) > 0 {
-					if stringInSlice(cloudbuildResponse.Status, n.notificationFiltersArr[i].Status) {
-						notify = true
-					}
-				}
-				if len(n.notificationFiltersArr[i].Branches) > 0 {
-					if stringInSlice(buildParams.BRANCH_NAME, n.notificationFiltersArr[i].Branches) {
-						notify = true
-					}
-				}
-				if len(n.notificationFiltersArr[i].Sources) > 0 {
-					if stringContainsSubstrSlice(buildParams.REPO_NAME, n.notificationFiltersArr[i].Sources) {
-						notify = true
-					}
-				}
-			}
-			if notify {
 				break
 			}
 		}
@@ -126,15 +91,6 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 func stringInSlice(needle string, haystack []string) bool {
 	for _, b := range haystack {
 		if b == needle {
-			return true
-		}
-	}
-	return false
-}
-
-func stringContainsSubstrSlice(needle string, haystack []string) bool {
-	for _, b := range haystack {
-		if strings.Contains(needle, b) {
 			return true
 		}
 	}

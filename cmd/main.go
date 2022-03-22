@@ -42,14 +42,7 @@ func main() {
 		}
 	}()
 
-	// Get NOTIFICATION_FILTERS environment variable and convert it to an Array
-	notificationFilters := viper.GetString("NOTIFICATION_FILTERS")
-	var notificationFiltersArr slack.FiltersType
-	notificationFiltersErr := json.Unmarshal([]byte(notificationFilters), &notificationFiltersArr)
-	if notificationFiltersErr != nil {
-		log.Printf("No notification filters found")
-	}
-	notifier := slack.New(viper.GetString("SLACK_WEBHOOK_URL"), notificationFiltersArr)
+	notifier := slack.New(viper.GetString("SLACK_WEBHOOK_URL"), viper.GetString("NOTIFICATION_FILTERS"))
 	cloudbuildClient, _ := cloudbuild.New(config.ProjectID)
 
 	// HTTP Handler
