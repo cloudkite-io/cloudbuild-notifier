@@ -27,47 +27,12 @@ Follow instructions here https://cloud.google.com/cloud-build/docs/configure-thi
 | GCLOUD_PROJECT_ID                     | no default                             | GCP project id                                                                                       |
 | SLACK_WEBHOOK_URL                     | no default                             | Slack Webhook URL. Read more https://api.slack.com/incoming-webhooks                                 |
 | GCLOUD_PUBSUB_SUBSCRIPTION_NAME       | cloudbuild-notifier-subscription       | Google Cloud Pub/Sub topic subscription. Read more: https://cloud.google.com/pubsub/docs/subscriber  |
-| NOTIFICATION_FILTERS                     | []                             | A list of filters that should trigger notifications to be sent to Slack (see section below) By default, notifications will be sent for all build messages |
+| NOTIFICATION_FILTERS                     | ""                             | A string of regex filters that should trigger notifications to be sent to Slack (see section below) By default, notifications will be sent for all build messages |
 
 ##### NOTIFICATION_FILTERS (Optional)
-The NOTIFICATION_FILTERS environment variable should be passed as a JSON string consisting of a list of objects as in the case below:
+The NOTIFICATION_FILTERS environment variable should be passed as a comma-separated string of regexes in the format:
 ```javascript
-[
-    {
-        "Status": [
-            "SUCCESS",
-            "WORKING"
-        ],
-        "Sources": [
-            "org-name/repo-name1",
-            "org-name/repo-name2"
-        ],
-        "Branches": [
-            "main",
-            "production"
-        ],
-        "Operator": "or"
-    },
-    {
-        "Status": [
-            "FAILURE",
-            "QUEUED"
-        ],
-        "Sources": [
-            "org-name/repo-name3",
-            "org-name/repo-name4"
-        ],
-        "Branches": [
-            "dev"
-        ],
-        "Operator": "and"
-    }
-]
+<source regex>:<branch regex>:<status regex>,<source regex>:<branch regex>:<status regex>
+e.g.
+org-name/repo-name-(1|2):(main|production|dev-*):(SUCCESS|WORKING),org-name/repo-name-(3|4):dev:(FAILURE|QUEUED)
 ```
-Below is a description of the four(optional) parameters that it takes
-| NAME                                  | DEFAULT                                | DESCRIPTION                                                                                          |
-| ------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Status                     | All statuses                             | A list of build status that should trigger notifications to be sent to Slack e.g. ["FAILURE", "INTERNAL_ERROR"]. By default, notifications will be sent for all statuses |
-| Sources                     | Any source                             | A list of substrings that will be used to match which source Repos should trigger notifications to be sent to Slack e.g. ["org-name/repo-name"] |
-| Branches                     | All branches                             | A list of branches whose builds should trigger notifications to be sent to Slack e.g. ["main", "production"]. By default, notifications will be sent for all branches |
-| Operator                     | "or"                             | The logical operation that should be used to trigger notifications. Options are: "and" or "or". When "and" is used, notifications will only be sent when the build matches all the other NOTIFICATION_FILTERS that have been provided. When "or" is used, notifications are triggered when the build matches any of the NOTIFICATION_FILTERS that have been provided.  |
