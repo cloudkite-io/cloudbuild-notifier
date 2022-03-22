@@ -3,6 +3,8 @@ package slack
 import (
 	"fmt"
 	"log"
+	"regexp"
+	"strings"
 
 	cloudbuildnotifier "github.com/cloudkite-io/cloudbuild-notifier"
 	"github.com/cloudkite-io/cloudbuild-notifier/pkg/cloudbuild"
@@ -10,15 +12,39 @@ import (
 )
 
 type notifier struct {
-	webhookURL string
+	webhookURL          string
+	notificationFilters string
 }
 
 // New creates a slack notifier.
-func New(webhookURL string) cloudbuildnotifier.Notifier {
-	return notifier{webhookURL}
+func New(webhookURL string, notificationFilters string) cloudbuildnotifier.Notifier {
+	return notifier{webhookURL, notificationFilters}
 }
 
 func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse, buildParams cloudbuild.BuildParameters) error {
+
+	// Check if there are any notification filters that have been passed
+	// Notification filters are used to determine whether the build status should be sent to Slack channel
+	// <source regex>:<branch regex>:<status regex>,<source regex>:<branch regex>:<status regex>
+	if n.notificationFilters != "" {
+		notify := false
+		notificationFiltersArray := strings.Split(n.notificationFilters, ",")
+		for i := 0; i < len(notificationFiltersArray); i++ {
+			splitNotificationFilters := strings.Split(notificationFiltersArray[i], ":")
+			sourceRegex, _ := regexp.Compile(splitNotificationFilters[0])
+			branchRegex, _ := regexp.Compile(splitNotificationFilters[1])
+			statusRegex, _ := regexp.Compile(splitNotificationFilters[2])
+			// check if all filters have been met
+			if sourceRegex.MatchString(buildParams.REPO_NAME) && branchRegex.MatchString(buildParams.BRANCH_NAME) && statusRegex.MatchString(cloudbuildResponse.Status) {
+				notify = true
+				break
+			}
+		}
+		if !notify {
+			return nil
+		}
+
+	}
 
 	var color string
 	switch {

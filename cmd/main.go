@@ -1,16 +1,17 @@
 package main
 
 import (
-	"cloud.google.com/go/pubsub"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+
+	"cloud.google.com/go/pubsub"
 	cloudbuildnotifier "github.com/cloudkite-io/cloudbuild-notifier"
 	"github.com/cloudkite-io/cloudbuild-notifier/pkg/cloudbuild"
 	"github.com/cloudkite-io/cloudbuild-notifier/pkg/notifier/slack"
 	"github.com/cloudkite-io/cloudbuild-notifier/pkg/subscriber"
 	"github.com/spf13/viper"
-	"log"
-	"net/http"
 )
 
 func init() {
@@ -41,7 +42,7 @@ func main() {
 		}
 	}()
 
-	notifier := slack.New(viper.GetString("SLACK_WEBHOOK_URL"))
+	notifier := slack.New(viper.GetString("SLACK_WEBHOOK_URL"), viper.GetString("NOTIFICATION_FILTERS"))
 	cloudbuildClient, _ := cloudbuild.New(config.ProjectID)
 
 	// HTTP Handler
@@ -60,8 +61,8 @@ func main() {
 
 type pubSubHTTPMessage struct {
 	Message struct {
-		Data []byte `json:"data,omitempty"`
-		Attributes  map[string]string `json:"attributes,omitempty"`
+		Data       []byte            `json:"data,omitempty"`
+		Attributes map[string]string `json:"attributes,omitempty"`
 	} `json:"message"`
 	Subscription string `json:"subscription"`
 }
@@ -80,9 +81,9 @@ func httpHandler(n cloudbuildnotifier.Notifier, c *cloudbuild.CloudbuildClient) 
 		}
 
 		m := &pubsub.Message{
-			ID:   pubsubHttp.Message.Attributes["buildId"],
+			ID:         pubsubHttp.Message.Attributes["buildId"],
 			Attributes: pubsubHttp.Message.Attributes,
-			Data: pubsubHttp.Message.Data,
+			Data:       pubsubHttp.Message.Data,
 		}
 
 		if err := handleMessage(m, n, c); err != nil {
