@@ -1,8 +1,9 @@
 package cloudbuildnotifier
 
 import (
-	"github.com/cloudkite-io/cloudbuild-notifier/pkg/cloudbuild"
 	"time"
+
+	"github.com/cloudkite-io/cloudbuild-notifier/pkg/cloudbuild"
 )
 
 // Notifier sends messages
@@ -14,4 +15,5 @@ type CloudbuildResponse struct {
 	Status     string    `json:"status"`
 	CreateTime time.Time `json:"createTime"`
 	LogURL     string    `json:"logUrl"`
+	Source     string    `json:"source"`
 }
