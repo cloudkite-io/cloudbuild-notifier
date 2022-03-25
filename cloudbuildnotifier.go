@@ -15,5 +15,4 @@ type CloudbuildResponse struct {
 	Status     string    `json:"status"`
 	CreateTime time.Time `json:"createTime"`
 	LogURL     string    `json:"logUrl"`
-	Source     string    `json:"source"`
 }
