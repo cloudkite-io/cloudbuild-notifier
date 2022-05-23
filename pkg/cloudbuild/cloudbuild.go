@@ -3,6 +3,7 @@ package cloudbuild
 import (
 	"context"
 	"fmt"
+
 	"github.com/fatih/structs"
 	cloudbuild "google.golang.org/api/cloudbuild/v1"
 )
@@ -32,9 +33,10 @@ type BuildParameters struct {
 	COMMIT_SHA   string
 	REVISION_ID  string
 	TRIGGER_NAME string
+	TAG_NAME     string
 }
 
-func (c *CloudbuildClient) GetBuildParameterss(buildId string) (BuildParameters, error) {
+func (c *CloudbuildClient) GetBuildParameters(buildId string) (BuildParameters, error) {
 	buildParams := &BuildParameters{
 		Id: buildId,
 	}
