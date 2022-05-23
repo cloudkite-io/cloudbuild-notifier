@@ -32,7 +32,7 @@ Follow instructions here https://cloud.google.com/cloud-build/docs/configure-thi
 ##### NOTIFICATION_FILTERS (Optional)
 The NOTIFICATION_FILTERS environment variable should be passed as a comma-separated string of regexes in the format:
 ```javascript
-<source regex>:<branch regex>:<status regex>,<source regex>:<branch regex>:<status regex>
+<source regex>:<branch regex>:<status regex>,<source regex>:<branch regex>:<status regex>:<tag regex>
 e.g.
-org-name/repo-name-(1|2):(main|production|dev-*):(SUCCESS|WORKING),org-name/repo-name-(3|4):dev:(FAILURE|QUEUED)
+org-name/repo-name-(1|2):(main|production|dev-*):(SUCCESS|WORKING),org-name/repo-name-(3|4):dev:(FAILURE|QUEUED):monitoring-*
 ```
