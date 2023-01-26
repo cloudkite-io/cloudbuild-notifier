@@ -22,6 +22,7 @@ func New(webhookURL string, notificationFilters string) cloudbuildnotifier.Notif
 }
 
 func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse, buildParams cloudbuild.BuildParameters) error {
+	log.Printf("Received notification for build %s in branch %s of %s repo with status %s", buildParams.Id, buildParams.BRANCH_NAME, buildParams.REPO_NAME, cloudbuildResponse.Status)
 
 	// Check if there are any notification filters that have been passed
 	// Notification filters are used to determine whether the build status should be sent to Slack channel
@@ -54,6 +55,7 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 
 		}
 		if !notify {
+			log.Printf("Notification for build %s will not be notified", buildParams.Id)
 			return nil
 		}
 
@@ -70,6 +72,7 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 	}
 
 	if cloudbuildResponse.Status == "QUEUED" || cloudbuildResponse.Status == "WORKING" {
+		log.Printf("Notification for build %s will not be notified", buildParams.Id)
 		return nil
 	}
 
