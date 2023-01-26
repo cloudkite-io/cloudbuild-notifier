@@ -47,6 +47,7 @@ func (s Subscriber) Receive(msg chan<- *pubsub.Message) (err error) {
 
 	log.Println("Starting to listen to events...")
 	err = subscription.Receive(ctx, func(ctx context.Context, pbmsg *pubsub.Message) {
+		log.Println("Received new pub/sub message.")
 		msg <- pbmsg
 	})
 	if err != nil {
