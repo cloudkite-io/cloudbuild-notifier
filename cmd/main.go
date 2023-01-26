@@ -85,6 +85,7 @@ func httpHandler(n cloudbuildnotifier.Notifier, c *cloudbuild.CloudbuildClient) 
 			Attributes: pubsubHttp.Message.Attributes,
 			Data:       pubsubHttp.Message.Data,
 		}
+		log.Println("Received new pub/sub message via HTTP")
 
 		if err := handleMessage(m, n, c); err != nil {
 			errorMessage := fmt.Sprintf("Error handling http message: %s", err)
