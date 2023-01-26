@@ -52,6 +52,7 @@ func (s Subscriber) Receive(msg chan<- *pubsub.Message) (err error) {
 	if err != nil {
 		return fmt.Errorf("error while receving pubsub message: %s", err)
 	}
+	log.Println("Stopped listening to events.")
 
 	return nil
 }
