@@ -29,18 +29,19 @@ func main() {
 		SubName:   subName,
 	}
 
-	sub, err := subscriber.New(config)
-	if err != nil {
-		log.Printf("failed creating cloudbuild subscriber: %s", err)
-	}
+	// sub, err := subscriber.New(config)
+	var err error
+	// if err != nil {
+	// 	log.Printf("failed creating cloudbuild subscriber: %s", err)
+	// }
 
 	msg := make(chan *pubsub.Message)
-	go func() {
-		err = sub.Receive(msg)
-		if err != nil {
-			log.Printf("failed receiving cloudbuild notification: %s", err)
-		}
-	}()
+	// go func() {
+	// 	err = sub.Receive(msg)
+	// 	if err != nil {
+	// 		log.Printf("failed receiving cloudbuild notification: %s", err)
+	// 	}
+	// }()
 
 	notifier := slack.New(viper.GetString("SLACK_WEBHOOK_URL"), viper.GetString("NOTIFICATION_FILTERS"))
 	cloudbuildClient, _ := cloudbuild.New(config.ProjectID)
@@ -49,7 +50,7 @@ func main() {
 	http.HandleFunc("/", httpHandler(notifier, cloudbuildClient))
 	http.HandleFunc("/status", statusHandler)
 	go http.ListenAndServe(":8000", nil)
-
+	log.Println("Starting to listen to events...")
 	// Pubsub handler
 	for {
 		err = handleMessage(<-msg, notifier, cloudbuildClient)
@@ -73,10 +74,12 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 
 func httpHandler(n cloudbuildnotifier.Notifier, c *cloudbuild.CloudbuildClient) http.HandlerFunc {
 	pubsubHttp := &pubSubHTTPMessage{}
+	log.Println("Received new pub/sub message via HTTP")
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := json.NewDecoder(r.Body).Decode(pubsubHttp); err != nil {
 			http.Error(w, fmt.Sprintf("Could not decode request body: %v", err), http.StatusBadRequest)
+			log.Println("Could not decode request body: ", err)
 			return
 		}
 
@@ -85,11 +88,10 @@ func httpHandler(n cloudbuildnotifier.Notifier, c *cloudbuild.CloudbuildClient) 
 			Attributes: pubsubHttp.Message.Attributes,
 			Data:       pubsubHttp.Message.Data,
 		}
-		log.Println("Received new pub/sub message via HTTP")
 
 		if err := handleMessage(m, n, c); err != nil {
 			errorMessage := fmt.Sprintf("Error handling http message: %s", err)
-			fmt.Printf(errorMessage)
+			log.Println(errorMessage)
 			http.Error(w, errorMessage, http.StatusInternalServerError)
 			return
 		}
