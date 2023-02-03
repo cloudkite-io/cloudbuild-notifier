@@ -38,25 +38,25 @@ func New(config *Config) (Subscriber, error) {
 }
 
 // Receive listens for cloudbuild notifications.
-// func (s Subscriber) Receive(msg chan<- *pubsub.Message) (err error) {
-// 	ctx := context.Background()
-// 	subscription, err := s.getOrCreateSubscription(ctx, s.topic)
-// 	if err != nil {
-// 		return fmt.Errorf("failed getting/creating sub: %s", err)
-// 	}
+func (s Subscriber) Receive(msg chan<- *pubsub.Message) (err error) {
+	ctx := context.Background()
+	subscription, err := s.getOrCreateSubscription(ctx, s.topic)
+	if err != nil {
+		return fmt.Errorf("failed getting/creating sub: %s", err)
+	}
 
-// 	log.Println("Starting to listen to events...")
-// 	err = subscription.Receive(ctx, func(ctx context.Context, pbmsg *pubsub.Message) {
-// 		log.Println("Received new pub/sub message.")
-// 		msg <- pbmsg
-// 	})
-// 	if err != nil {
-// 		return fmt.Errorf("error while receving pubsub message: %s", err)
-// 	}
-// 	log.Println("Stopped listening to events.")
+	log.Println("Starting to listen to events...")
+	err = subscription.Receive(ctx, func(ctx context.Context, pbmsg *pubsub.Message) {
+		log.Println("Received new pub/sub message.")
+		msg <- pbmsg
+	})
+	if err != nil {
+		return fmt.Errorf("error while receving pubsub message: %s", err)
+	}
+	log.Println("Stopped listening to events.")
 
-// 	return nil
-// }
+	return nil
+}
 
 func (s Subscriber) getOrCreateSubscription(ctx context.Context, topic *pubsub.Topic) (*pubsub.Subscription, error) {
 	exists, err := s.client.Subscription(s.config.SubName).Exists(ctx)

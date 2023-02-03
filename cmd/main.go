@@ -29,19 +29,19 @@ func main() {
 		SubName:   subName,
 	}
 
-	// sub, err := subscriber.New(config)
-	var err error
-	// if err != nil {
-	// 	log.Printf("failed creating cloudbuild subscriber: %s", err)
-	// }
+	sub, err := subscriber.New(config)
+	// var err error
+	if err != nil {
+		log.Printf("failed creating cloudbuild subscriber: %s", err)
+	}
 
 	msg := make(chan *pubsub.Message)
-	// go func() {
-	// 	err = sub.Receive(msg)
-	// 	if err != nil {
-	// 		log.Printf("failed receiving cloudbuild notification: %s", err)
-	// 	}
-	// }()
+	go func() {
+		err = sub.Receive(msg)
+		if err != nil {
+			log.Printf("failed receiving cloudbuild notification: %s", err)
+		}
+	}()
 
 	notifier := slack.New(viper.GetString("SLACK_WEBHOOK_URL"), viper.GetString("NOTIFICATION_FILTERS"))
 	cloudbuildClient, _ := cloudbuild.New(config.ProjectID)
