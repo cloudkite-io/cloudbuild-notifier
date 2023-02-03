@@ -49,7 +49,7 @@ func main() {
 	http.HandleFunc("/", httpHandler(notifier, cloudbuildClient))
 	http.HandleFunc("/status", statusHandler)
 	go http.ListenAndServe(":8000", nil)
-
+	log.Println("Starting to listen to events...")
 	// Pubsub handler
 	for {
 		err = handleMessage(<-msg, notifier, cloudbuildClient)
@@ -73,10 +73,12 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 
 func httpHandler(n cloudbuildnotifier.Notifier, c *cloudbuild.CloudbuildClient) http.HandlerFunc {
 	pubsubHttp := &pubSubHTTPMessage{}
+	log.Println("Received new pub/sub message via HTTP")
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := json.NewDecoder(r.Body).Decode(pubsubHttp); err != nil {
 			http.Error(w, fmt.Sprintf("Could not decode request body: %v", err), http.StatusBadRequest)
+			log.Println("Could not decode request body: ", err)
 			return
 		}
 
@@ -88,7 +90,7 @@ func httpHandler(n cloudbuildnotifier.Notifier, c *cloudbuild.CloudbuildClient) 
 
 		if err := handleMessage(m, n, c); err != nil {
 			errorMessage := fmt.Sprintf("Error handling http message: %s", err)
-			fmt.Printf(errorMessage)
+			log.Println(errorMessage)
 			http.Error(w, errorMessage, http.StatusInternalServerError)
 			return
 		}
