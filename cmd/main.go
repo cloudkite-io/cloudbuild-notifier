@@ -30,7 +30,6 @@ func main() {
 	}
 
 	sub, err := subscriber.New(config)
-	// var err error
 	if err != nil {
 		log.Printf("failed creating cloudbuild subscriber: %s", err)
 	}
