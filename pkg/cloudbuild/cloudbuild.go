@@ -26,6 +26,8 @@ func New(projectId string) (*CloudbuildClient, error) {
 	}, nil
 }
 
+// https://cloud.google.com/build/docs/api/reference/rest/v1/projects.builds#Build
+// 
 type BuildParameters struct {
 	Id           string
 	REPO_NAME    string
@@ -34,6 +36,9 @@ type BuildParameters struct {
 	REVISION_ID  string
 	TRIGGER_NAME string
 	TAG_NAME     string
+	LOCATION	 string
+	BUILD_ID     string
+	
 }
 
 func (c *CloudbuildClient) GetBuildParameters(buildId string) (BuildParameters, error) {

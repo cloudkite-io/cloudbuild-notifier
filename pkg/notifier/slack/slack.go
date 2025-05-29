@@ -22,13 +22,20 @@ func New(webhookURL string, notificationFilters string) cloudbuildnotifier.Notif
 }
 
 func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse, buildParams cloudbuild.BuildParameters) error {
+	// Received notification for build 4ba8ee4e-b76a-492f-8884-43ae7993df8e in branch __ of repo with status QUEUED
 	log.Printf("Received notification for build %s in branch %s of %s repo with status %s", buildParams.Id, buildParams.BRANCH_NAME, buildParams.REPO_NAME, cloudbuildResponse.Status)
 
 	// Check if there are any notification filters that have been passed
 	// Notification filters are used to determine whether the build status should be sent to Slack channel
 	// <source regex>:<branch regex>:<status regex>,<source regex>:<branch regex>:<status regex>
-	if n.notificationFilters != "" {
-		notify := false
+	notify := true
+	log.Printf("Notification filters: %s", n.notificationFilters)
+	// if there are no filters, send the notification
+	if n.notificationFilters == "" {
+		log.Printf("No notification filters provided. Sending notification for build %s", buildParams.Id)
+		return nil
+	} else {
+		notify = false
 		notificationFiltersArray := strings.Split(n.notificationFilters, ",")
 		for i := 0; i < len(notificationFiltersArray); i++ {
 			splitNotificationFilters := strings.Split(notificationFiltersArray[i], ":")

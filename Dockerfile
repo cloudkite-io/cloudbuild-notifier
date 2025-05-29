@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine as build
+FROM golang:1.24.3-alpine AS build
 WORKDIR /src
 # ca-certs and git required for go modules
 RUN apk add ca-certificates git
@@ -14,4 +14,4 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /app ./cmd
 FROM alpine
 COPY --from=build /app /
 RUN apk add ca-certificates
-CMD ./app
+CMD ["./app"]
