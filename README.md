@@ -12,7 +12,7 @@ gcr.io/cloudkite-public/cloudbuild-notifier:latest
 Cloudbuild Notifier filters out messages from Cloud Pub/Sub messages and send notifications to Slack if there failing builds.
 
 A subscription to that topic is created automatically to receive build status messages and if builds have any fails (FAILURE, INTERNAL_ERROR, TIMEOUT, CANCELLED), a notification is sent to Slack and/or Email.
-One can apply filters to determine when notifications should be sent based on: Build Status, Source Branch or Source Repo. 
+One can apply filters to determine when notifications should be sent based on: Build Status, Source Branch, Source Repo or Trigger. 
 
 #### Slack Setup
 

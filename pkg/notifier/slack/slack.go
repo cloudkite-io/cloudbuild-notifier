@@ -35,19 +35,20 @@ func (n notifier) Send(cloudbuildResponse cloudbuildnotifier.CloudbuildResponse,
 			sourceRegex, _ := regexp.Compile(splitNotificationFilters[0])
 			branchRegex, _ := regexp.Compile(splitNotificationFilters[1])
 			statusRegex, _ := regexp.Compile(splitNotificationFilters[2])
+			sourceMatches := sourceRegex.MatchString(buildParams.REPO_NAME) || sourceRegex.MatchString(buildParams.TRIGGER_NAME)
 
 			// check if all filters have been met
 			if len(splitNotificationFilters) == 4 {
 				tagRegex, _ := regexp.Compile(splitNotificationFilters[3])
 
-				if sourceRegex.MatchString(buildParams.REPO_NAME) &&
+				if sourceMatches &&
 					statusRegex.MatchString(cloudbuildResponse.Status) &&
 					(branchRegex.MatchString(buildParams.BRANCH_NAME) || tagRegex.MatchString(buildParams.TAG_NAME)) {
 					notify = true
 					break
 				}
 			} else {
-				if sourceRegex.MatchString(buildParams.REPO_NAME) && branchRegex.MatchString(buildParams.BRANCH_NAME) && statusRegex.MatchString(cloudbuildResponse.Status) {
+				if sourceMatches && branchRegex.MatchString(buildParams.BRANCH_NAME) && statusRegex.MatchString(cloudbuildResponse.Status) {
 					notify = true
 					break
 				}
